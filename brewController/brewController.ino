@@ -20,8 +20,7 @@
 BLEService ledService("19B10000-E8F2-537E-4F6C-D104768A1214"); // BLE LED Service
 
 // BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLEUnsignedCharCharacteristic statusCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead );
-BLEUnsignedCharCharacteristic switchCharacteristic("19B10002-E8F2-537E-4F6C-D104768A1214", BLEWrite);
+BLEByteCharacteristic switchCharacteristic("19B10002-E8F2-537E-4F6C-D104768A1214", BLERead|BLEWrite);
 const int ledPin = LED_BUILTIN; // pin to use for the LED
 
 void setup() {
@@ -33,7 +32,7 @@ void setup() {
 
   // begin initialization
   if (!BLE.begin()) {
-    Serial.println("starting BLE failed!");
+    Serial.println("Starting BLE failed!");
 
     while (1);
   }
@@ -44,19 +43,17 @@ void setup() {
 
   // add the characteristic to the service
   ledService.addCharacteristic(switchCharacteristic);
-  ledService.addCharacteristic(statusCharacteristic);
 
   // add service
   BLE.addService(ledService);
 
   // set the initial value for the characeristic:
   switchCharacteristic.writeValue(1);
-  statusCharacteristic.writeValue(1);
   digitalWrite(ledPin, HIGH); 
   // start advertising
   BLE.advertise();
 
-  Serial.println("BLE LED Peripheral");
+  Serial.println("BrewController");
 }
 
 void loop() {
@@ -72,25 +69,11 @@ void loop() {
 
     // while the central is still connected to peripheral:
     while (central.connected()) {
-        if (switchCharacteristic.canWrite()) {
-    Serial.println("characteristic is writable");
-  }
-  else
-  {
-    Serial.println("characteristic is not writable");
-  }
-  if (statusCharacteristic.canRead()) {
-    Serial.println("characteristic is readable");
-  }
-  else
-  {
-    Serial.println("characteristic is not readable");
-  }
       // if the remote device wrote to the characteristic,
       // use the value to control the LED:
-      Serial.println(switchCharacteristic.value());
+
       if (switchCharacteristic.written()) {
-        statusCharacteristic.writeValue(switchCharacteristic.value());
+        switchCharacteristic.writeValue(switchCharacteristic.value());
         if (switchCharacteristic.value()) {   // any value other than 0
           Serial.println("LED on");
           digitalWrite(ledPin, HIGH);         // will turn the LED on
